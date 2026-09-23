@@ -39,7 +39,7 @@ jobs:
           python ci/apply_a171.py
           python ci/fix_generated_gd.py
           python ci/apply_a17_polish.py
-          grep -q '0.1.7' project.godot
+          grep -q '0.1.8' project.godot
           echo "Godot: $(godot --version)"
 
       - name: Import game resources
@@ -94,16 +94,16 @@ jobs:
           set -euo pipefail
           cd build
           if [ -f AfterZero.pck ]; then
-            zip -9 AfterZero-A1.7-Windows-x64.zip AfterZero.exe AfterZero.pck
+            zip -9 AfterZero-A1.8-Windows-x64.zip AfterZero.exe AfterZero.pck
           else
-            zip -9 AfterZero-A1.7-Windows-x64.zip AfterZero.exe
+            zip -9 AfterZero-A1.8-Windows-x64.zip AfterZero.exe
           fi
 
       - name: Upload Windows build
         uses: actions/upload-artifact@v4
         with:
-          name: AfterZero-A1.7-Windows-x64
-          path: build/AfterZero-A1.7-Windows-x64.zip
+          name: AfterZero-A1.8-Windows-x64
+          path: build/AfterZero-A1.8-Windows-x64.zip
           if-no-files-found: error
           retention-days: 30
 
@@ -111,7 +111,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: AfterZero-A1.7-runtime-log
+          name: AfterZero-A1.8-runtime-log
           path: runtime-smoke.log
           if-no-files-found: ignore
           retention-days: 7
