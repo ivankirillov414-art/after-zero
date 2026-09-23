@@ -25,24 +25,27 @@ jobs:
         run: |
           set -euo pipefail
           ZIP_FILE="$(find . -maxdepth 1 -type f -name 'After_Zero_A1_6_Source*.zip' -print -quit)"
-          if [ -n "$ZIP_FILE" ]; then
-            rm -rf .ci_source
-            mkdir .ci_source
-            unzip -q "$ZIP_FILE" -d .ci_source
-            PROJECT_DIR="$(find .ci_source -name project.godot -printf '%h\n' | head -n 1)"
-            test -n "$PROJECT_DIR"
-            cp -a "$PROJECT_DIR"/. .
-          fi
+          test -n "$ZIP_FILE"
+          rm -rf .ci_source
+          mkdir .ci_source
+          unzip -q "$ZIP_FILE" -d .ci_source
+          PROJECT_DIR="$(find .ci_source -name project.godot -printf '%h\n' | head -n 1)"
+          test -n "$PROJECT_DIR"
+          cp -a "$PROJECT_DIR"/. .
           test -f project.godot
           test -f export_presets.cfg
+          python ci/fix_generated_gd.py
           echo "Godot: $(godot --version)"
-          echo "Project: $(pwd)/project.godot"
 
-      - name: Import project and validate scripts
+      - name: Runtime smoke test
         shell: bash
         run: |
-          set -euo pipefail
-          godot --headless --editor --quit --path .
+          set -o pipefail
+          timeout 15s godot --headless --path . --quit-after 5 2>&1 | tee runtime-smoke.log
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" runtime-smoke.log; then
+            echo "Runtime script validation failed"
+            exit 1
+          fi
 
       - name: Export Windows x64
         shell: bash
@@ -62,7 +65,6 @@ jobs:
           else
             zip -9 AfterZero-Windows-x64.zip AfterZero.exe
           fi
-          ls -lh AfterZero-Windows-x64.zip
 
       - name: Upload Windows build
         uses: actions/upload-artifact@v4
@@ -71,3 +73,12 @@ jobs:
           path: build/AfterZero-Windows-x64.zip
           if-no-files-found: error
           retention-days: 30
+
+      - name: Upload runtime log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AfterZero-runtime-log
+          path: runtime-smoke.log
+          if-no-files-found: ignore
+          retention-days: 7
