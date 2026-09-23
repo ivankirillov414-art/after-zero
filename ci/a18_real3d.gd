@@ -39,19 +39,23 @@ func _disable_photo_shell(target_world: Node3D) -> void:
 			if child is Node3D:
 				child.visible = false
 
-func _has_script_ancestor(node: Node, stop: Node) -> bool:
+func _script_ancestor_path(node: Node, stop: Node) -> String:
 	var p := node.get_parent()
 	while p != null and p != stop:
-		if p.get_script() != null:
-			return true
+		var script = p.get_script()
+		if script != null:
+			return str(script.resource_path)
 		p = p.get_parent()
-	return false
+	return ""
 
 func _hide_graybox_keep_gameplay(target_world: Node3D) -> void:
+	# Hide all old world art, including the A1.7 photo-card shell. Re-enable only
+	# visuals that belong to real gameplay scripts such as pickups/enemies.
 	for label in target_world.find_children("*", "Label3D", true, false):
 		label.visible = false
 	for mesh in target_world.find_children("*", "MeshInstance3D", true, false):
-		mesh.visible = _has_script_ancestor(mesh, target_world)
+		var owner_script: String = _script_ancestor_path(mesh, target_world)
+		mesh.visible = owner_script != "" and not owner_script.contains("a17_polish.gd")
 
 func _tune_environment(target_world: Node3D) -> void:
 	for child in target_world.get_children():
@@ -447,16 +451,16 @@ func _vine(parent: Node3D, start: Vector3, finish: Vector3, leaves: int) -> void
 
 func _build_grass_multimesh() -> void:
 	var blade := QuadMesh.new()
-	blade.size = Vector2(0.055,0.48)
+	blade.size = Vector2(0.040,0.38)
 	var grass_mat := StandardMaterial3D.new()
-	grass_mat.albedo_color = Color(0.11,0.26,0.065)
+	grass_mat.albedo_color = Color(0.055,0.14,0.035)
 	grass_mat.roughness=1.0
 	grass_mat.cull_mode=BaseMaterial3D.CULL_DISABLED
 	blade.material=grass_mat
 	var mm := MultiMesh.new()
 	mm.transform_format=MultiMesh.TRANSFORM_3D
 	mm.mesh=blade
-	mm.instance_count=900
+	mm.instance_count=620
 	for i in range(mm.instance_count):
 		var x: float
 		if i%2==0: x=rng.randf_range(-13.0,-6.8)
@@ -472,6 +476,12 @@ func _build_grass_multimesh() -> void:
 
 func _cleanup_hud(hud: CanvasLayer) -> void:
 	if hud == null: return
+	var stealth = world.get("stealth_label")
+	if stealth != null:
+		stealth.visible = false
+	var eco = world.get("ecosystem_label")
+	if eco != null:
+		eco.visible = false
 	for label in hud.find_children("*","Label",true,false):
 		var txt: String = str(label.text)
 		if txt.begins_with("ПОСЛЕ НУЛЯ") or txt.contains("WASD") or txt.begins_with("ЭКОСИСТЕМА") or txt.begins_with("ШУМ"):
