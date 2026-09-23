@@ -32,10 +32,15 @@ if 'real3d_a18.build(self, player, hud)' not in text:
     if ready_start < 0 or process_start < 0:
         raise SystemExit('Cannot locate _ready block')
     ready_block = text[ready_start:process_start]
-    target = '\t_update_objective()'
+    # A1.8 must run AFTER A1.7 creates its temporary photo shell, otherwise
+    # A1.7 would add the cards again after A1.8 hides them.
+    target = '\tpolish_a17.build(self, player, hud)'
     idx = ready_block.rfind(target)
     if idx < 0:
-        raise SystemExit('Cannot locate final _update_objective in _ready')
+        target = '\t_update_objective()'
+        idx = ready_block.rfind(target)
+    if idx < 0:
+        raise SystemExit('Cannot locate A1.8 insertion point in _ready')
     insert_at = ready_start + idx + len(target)
     addition = '\n\tvar real3d_a18 := A18_REAL3D_SCRIPT.new()\n\tadd_child(real3d_a18)\n\treal3d_a18.build(self, player, hud)'
     text = text[:insert_at] + addition + text[insert_at:]
