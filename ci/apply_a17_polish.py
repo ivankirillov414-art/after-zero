@@ -54,6 +54,17 @@ visual = visual.replace('\t_create_car(Vector3(3.6,0.60,-4.0),5.0,Color(0.28,0.1
 visual = visual.replace('\t_create_car(Vector3(-3.1,0.60,-18.0),-2.0,Color(0.13,0.16,0.16),0.88)\n', '')
 visual = visual.replace('var tree_positions := [Vector3(-9.7,0,-9),Vector3(9.5,0,-12),Vector3(-10.0,0,8),Vector3(10.2,0,9),Vector3(-10.5,0,20),Vector3(10.6,0,24),Vector3(-11.5,0,-25),Vector3(11.2,0,-29)]', 'var tree_positions := []')
 
+visual = visual.replace('Vector3(0, 0.08, 4), Vector3(13.8, 0.10, 73)', 'Vector3(0, 0.08, 20), Vector3(13.8, 0.10, 17)')
+visual = visual.replace('Vector3(side*8.15, 0.18, 4), Vector3(2.6,0.22,73)', 'Vector3(side*8.15, 0.18, 20), Vector3(2.6,0.22,17)')
+visual = visual.replace('Vector3(side*6.75, 0.30,4),Vector3(0.20,0.44,73)', 'Vector3(side*6.75, 0.30,20),Vector3(0.20,0.44,17)')
+visual = visual.replace('for z in range(-28, 38, 5):', 'for z in range(11, 29, 5):')
+visual = visual.replace('rng.randf_range(-22.0,35.0)', 'rng.randf_range(10.0,28.0)')
+visual = visual.replace('for z in [-20.0,-2.0,17.0,34.0]:', 'for z in [17.0,34.0]:')
+visual = visual.replace('for z in [-23.0,4.0,29.0]:', 'for z in [29.0]:')
+visual = visual.replace('rng.randf_range(-30.0,36.0)', 'rng.randf_range(10.0,34.0)')
+visual = visual.replace('plate.color = Color(0.008,0.014,0.012,0.58)', 'plate.color = Color(0.008,0.014,0.012,0.46)')
+
+
 dst.write_text(visual, encoding="utf-8")
 
 world = root / "scripts" / "world.gd"
@@ -83,6 +94,11 @@ if "polish_a17.build(self, player, hud)" not in text:
     insert_at = ready_start + idx + len(target)
     addition = '\n\tvar polish_a17 := A17_POLISH_SCRIPT.new()\n\tadd_child(polish_a17)\n\tpolish_a17.build(self, player, hud)'
     text = text[:insert_at] + addition + text[insert_at:]
+
+
+# Put the ecology state out of the objective card so the HUD no longer collides.
+text = text.replace("ecosystem_label.position = Vector2(20, 164)", "ecosystem_label.position = Vector2(20, 655)")
+text = text.replace("ecosystem_label.position = Vector2(20, 122)", "ecosystem_label.position = Vector2(20, 655)")
 
 world.write_text(text, encoding="utf-8")
 print("A1.7 cinematic polish applied")
