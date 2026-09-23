@@ -125,17 +125,21 @@ func _panorama(path: String, pos: Vector3, size: Vector2, rot_y: float) -> void:
 	add_child(card)
 
 func _build_panorama() -> void:
-	_panorama("res://docs/visual_reference/01_main_street.png", Vector3(0, 35.0, -62.0), Vector2(132.0, 74.25), 0.0)
-	_panorama("res://docs/visual_reference/02_intersection.png", Vector3(0, 31.0, 72.0), Vector2(112.0, 63.0), 180.0)
-	_panorama("res://docs/visual_reference/03_market.png", Vector3(68.0, 28.0, 8.0), Vector2(96.0, 54.0), -90.0)
-	_panorama("res://docs/visual_reference/04_workshop.png", Vector3(-68.0, 26.0, 8.0), Vector2(92.0, 51.75), 90.0)
+	# The approved Riverdale render fills the whole forward frustum. Keeping its
+	# edges outside the camera view avoids the "picture floating in the sky" look.
+	_panorama("res://docs/visual_reference/01_main_street.png", Vector3(0, 35.0, -78.0), Vector2(310.0, 174.4), 0.0)
+	# Rear/side cards only become visible after the player turns away from the
+	# opening street vista.
+	_panorama("res://docs/visual_reference/02_intersection.png", Vector3(0, 32.0, 92.0), Vector2(250.0, 140.6), 180.0)
+	_panorama("res://docs/visual_reference/03_market.png", Vector3(96.0, 32.0, 8.0), Vector2(125.0, 70.3), -90.0)
+	_panorama("res://docs/visual_reference/04_workshop.png", Vector3(-96.0, 30.0, 8.0), Vector2(120.0, 67.5), 90.0)
 
 func _build_foreground() -> void:
-	_box(Vector3(0, 0.08, 4), Vector3(13.8, 0.10, 73), Color(0.065,0.068,0.064), 0.98)
+	_box(Vector3(0, 0.08, -10), Vector3(13.8, 0.10, 112), Color(0.080,0.082,0.075), 0.98)
 	for side in [-1.0, 1.0]:
-		_box(Vector3(side*8.15, 0.18, 4), Vector3(2.6,0.22,73), Color(0.31,0.30,0.27),0.96)
-		_box(Vector3(side*6.75, 0.30,4),Vector3(0.20,0.44,73),Color(0.46,0.44,0.39),0.93)
-	for z in range(-28, 38, 5):
+		_box(Vector3(side*8.15, 0.18, -10), Vector3(2.6,0.22,112), Color(0.28,0.28,0.25),0.96)
+		_box(Vector3(side*6.75, 0.30,-10),Vector3(0.20,0.44,112),Color(0.42,0.41,0.36),0.93)
+	for z in range(-52, 38, 5):
 		_box(Vector3(-0.20,0.145,float(z)),Vector3(0.10,0.02,2.6),Color(0.72,0.57,0.18),0.86)
 		_box(Vector3(0.20,0.145,float(z)),Vector3(0.10,0.02,2.6),Color(0.72,0.57,0.18),0.86)
 	for i in range(18):
@@ -145,10 +149,6 @@ func _build_foreground() -> void:
 		var sz: float = rng.randf_range(0.4,1.6)
 		var c := Color(0.045,0.050,0.047) if i%3 else Color(0.08,0.12,0.12)
 		_box(Vector3(x,0.155,z),Vector3(sx,0.014,sz),c,0.20 if i%3==0 else 0.98,0.02,i%3==0)
-	_build_facade(Vector3(-14.5,4.0,7.0),Vector3(10.0,8.0,24.0),Color(0.30,0.14,0.085),false)
-	_build_facade(Vector3(14.5,3.2,13.0),Vector3(10.0,6.4,18.0),Color(0.25,0.23,0.19),true)
-	_build_facade(Vector3(-14.5,3.0,-16.0),Vector3(10.0,6.0,12.0),Color(0.35,0.20,0.12),false)
-	_build_facade(Vector3(14.5,4.5,-14.0),Vector3(10.0,9.0,14.0),Color(0.24,0.18,0.14),true)
 	_create_car(Vector3(-3.8,0.60,13.0),-4.0,Color(0.20,0.21,0.18),1.0)
 	_create_car(Vector3(3.6,0.60,-4.0),5.0,Color(0.28,0.17,0.12),0.92)
 	_create_car(Vector3(-3.1,0.60,-18.0),-2.0,Color(0.13,0.16,0.16),0.88)
@@ -246,15 +246,14 @@ func _create_car(pos: Vector3, yaw_deg: float, color: Color, scale_factor: float
 		_ellipsoid(pos+Vector3(rng.randf_range(-0.55,0.55),rng.randf_range(0.65,1.05),rng.randf_range(-1.3,1.3)),Vector3(rng.randf_range(0.25,0.55),rng.randf_range(0.10,0.22),rng.randf_range(0.30,0.65)),Color(0.10,0.25+rng.randf()*0.08,0.07))
 
 func _build_vegetation() -> void:
-	var tree_positions := [Vector3(-9.7,0,-9),Vector3(9.5,0,-12),Vector3(-10.0,0,8),Vector3(10.2,0,9),Vector3(-10.5,0,20),Vector3(10.6,0,24),Vector3(-11.5,0,-25),Vector3(11.2,0,-29)]
-	for p in tree_positions:
-		_tree(p,rng.randf_range(0.78,1.14))
-	for i in range(82):
+	# Keep close vegetation low and dark so the high-detail approved environment
+	# remains the dominant visual layer instead of being blocked by blob trees.
+	for i in range(46):
 		var side: float = -1.0 if i%2==0 else 1.0
-		var x: float = side*rng.randf_range(7.1,10.2)
-		var z: float = rng.randf_range(-30.0,36.0)
-		_shrub(Vector3(x,0.18,z),rng.randf_range(0.40,0.92))
-	for i in range(120):
+		var x: float = side*rng.randf_range(7.2,9.3)
+		var z: float = rng.randf_range(-42.0,36.0)
+		_shrub(Vector3(x,0.18,z),rng.randf_range(0.28,0.62))
+	for i in range(92):
 		var x: float = rng.randf_range(-9.8,9.8)
 		var z: float = rng.randf_range(-30.0,36.0)
 		if abs(x) < 5.7 and rng.randf() > 0.10:
@@ -292,15 +291,15 @@ func _cleanup_hud(hud: CanvasLayer) -> void:
 			label.size = Vector2(430,52)
 			label.add_theme_font_size_override("font_size",12)
 		elif t.begins_with("ЭКОСИСТЕМА"):
-			label.position = Vector2(24,108)
+			label.position = Vector2(24,124)
 			label.add_theme_font_size_override("font_size",10)
 		elif t.begins_with("ШУМ"):
 			label.position = Vector2(24,680)
 			label.add_theme_font_size_override("font_size",10)
 	var plate := ColorRect.new()
 	plate.position = Vector2(14,12)
-	plate.size = Vector2(455,122)
-	plate.color = Color(0.008,0.014,0.012,0.58)
+	plate.size = Vector2(455,142)
+	plate.color = Color(0.008,0.014,0.012,0.46)
 	plate.z_index = -8
 	hud.add_child(plate)
 	var tag := Label.new()
