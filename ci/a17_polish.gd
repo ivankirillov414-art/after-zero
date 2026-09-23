@@ -11,7 +11,6 @@ func build(target_world: Node3D, player: Node3D, hud: CanvasLayer) -> void:
 	_build_panorama()
 	_build_foreground()
 	_build_workshop_front()
-	_build_vegetation()
 	_cleanup_hud(hud)
 	if player:
 		player.position = Vector3(0.0, 0.35, 31.0)
@@ -166,10 +165,10 @@ void fragment() {
 	float grit = fbm(p * 4.0);
 	float puddle = smoothstep(0.70, 0.84, fbm(p * 0.28 + vec2(3.0, 8.0)));
 	float crack = smoothstep(0.86, 0.94, abs(fbm(p * 1.8) - 0.50) * 2.0);
-	vec3 asphalt = vec3(0.060, 0.064, 0.060);
-	asphalt *= 0.60 + broad * 0.72 + grit * 0.24;
-	asphalt = mix(asphalt, vec3(0.022, 0.030, 0.030), puddle * 0.72);
-	asphalt = mix(asphalt, vec3(0.012, 0.013, 0.012), crack * 0.48);
+	vec3 asphalt = vec3(0.115, 0.120, 0.112);
+	asphalt *= 0.72 + broad * 0.54 + grit * 0.18;
+	asphalt = mix(asphalt, vec3(0.038, 0.050, 0.050), puddle * 0.62);
+	asphalt = mix(asphalt, vec3(0.025, 0.027, 0.024), crack * 0.38);
 	ALBEDO = asphalt;
 }
 """
@@ -179,12 +178,12 @@ void fragment() {
 
 func _road_surface() -> void:
 	var plane := PlaneMesh.new()
-	plane.size = Vector2(13.8, 66.0)
+	plane.size = Vector2(13.8, 30.0)
 	plane.subdivide_width = 1
 	plane.subdivide_depth = 1
 	var road := MeshInstance3D.new()
 	road.mesh = plane
-	road.position = Vector3(0, 0.145, 4)
+	road.position = Vector3(0, 0.145, 22)
 	road.material_override = _road_material()
 	road.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(road)
@@ -192,9 +191,9 @@ func _road_surface() -> void:
 func _build_foreground() -> void:
 	_road_surface()
 	for side in [-1.0, 1.0]:
-		_box(Vector3(side*8.15, 0.18, 4), Vector3(2.6,0.22,66), Color(0.22,0.225,0.215),0.96)
-		_box(Vector3(side*6.75, 0.30,4),Vector3(0.20,0.44,66),Color(0.29,0.295,0.275),0.93)
-	for z in range(-27, 38, 5):
+		_box(Vector3(side*8.15, 0.18, 22), Vector3(2.6,0.22,30), Color(0.22,0.225,0.215),0.96)
+		_box(Vector3(side*6.75, 0.30,22),Vector3(0.20,0.44,30),Color(0.29,0.295,0.275),0.93)
+	for z in range(10, 38, 5):
 		_box(Vector3(-0.20,0.145,float(z)),Vector3(0.075,0.012,2.25),Color(0.44,0.36,0.10),0.86)
 		_box(Vector3(0.20,0.145,float(z)),Vector3(0.075,0.012,2.25),Color(0.44,0.36,0.10),0.86)
 
