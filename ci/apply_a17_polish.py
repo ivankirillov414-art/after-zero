@@ -12,15 +12,15 @@ shutil.copyfile(src, dst)
 # Second visual tuning pass: make the approved concept art fill the full distant
 # field of view, reduce primitive foreground mass, darken vegetation and clean HUD.
 visual = dst.read_text(encoding="utf-8")
-visual = visual.replace("player.position = Vector3(0.0, 0.35, 31.0)", "player.position = Vector3(0.0, 0.35, 24.0)")
+visual = visual.replace("player.position = Vector3(0.0, 0.35, 31.0)", "player.position = Vector3(0.0, 0.35, 26.5)")
 visual = visual.replace('''	if player:
 		player.position = Vector3(0.0, 0.35, 24.0)
 		player.rotation_degrees.y = 0.0''','''	if player:
 		player.position = Vector3(0.0, 0.35, 28.0)
 		player.rotation_degrees.y = 0.0
 		for cam in player.find_children("*", "Camera3D", true, false):
-			cam.fov = 62.0''')
-visual = visual.replace("Vector3(0, 35.0, -62.0), Vector2(132.0, 74.25)", "Vector3(0, 16.0, -2.0), Vector2(72.0, 40.5)")
+			cam.fov = 68.0''')
+visual = visual.replace("Vector3(0, 35.0, -62.0), Vector2(132.0, 74.25)", "Vector3(0, 8.0, 15.0), Vector2(28.0, 15.75)")
 visual = visual.replace("Vector3(0, 31.0, 72.0), Vector2(112.0, 63.0)", "Vector3(0, 47.0, 67.0), Vector2(188.0, 105.8)")
 visual = visual.replace("Vector3(68.0, 28.0, 8.0), Vector2(96.0, 54.0)", "Vector3(61.0, 44.0, 8.0), Vector2(160.0, 90.0)")
 visual = visual.replace("Vector3(-68.0, 26.0, 8.0), Vector2(92.0, 51.75)", "Vector3(-61.0, 42.0, 8.0), Vector2(154.0, 86.6)")
@@ -54,14 +54,14 @@ visual = visual.replace('\t_create_car(Vector3(3.6,0.60,-4.0),5.0,Color(0.28,0.1
 visual = visual.replace('\t_create_car(Vector3(-3.1,0.60,-18.0),-2.0,Color(0.13,0.16,0.16),0.88)\n', '')
 visual = visual.replace('var tree_positions := [Vector3(-9.7,0,-9),Vector3(9.5,0,-12),Vector3(-10.0,0,8),Vector3(10.2,0,9),Vector3(-10.5,0,20),Vector3(10.6,0,24),Vector3(-11.5,0,-25),Vector3(11.2,0,-29)]', 'var tree_positions := []')
 
-visual = visual.replace('Vector3(0, 0.08, 4), Vector3(13.8, 0.10, 73)', 'Vector3(0, 0.08, 20), Vector3(13.8, 0.10, 17)')
-visual = visual.replace('Vector3(side*8.15, 0.18, 4), Vector3(2.6,0.22,73)', 'Vector3(side*8.15, 0.18, 20), Vector3(2.6,0.22,17)')
-visual = visual.replace('Vector3(side*6.75, 0.30,4),Vector3(0.20,0.44,73)', 'Vector3(side*6.75, 0.30,20),Vector3(0.20,0.44,17)')
-visual = visual.replace('for z in range(-28, 38, 5):', 'for z in range(11, 29, 5):')
-visual = visual.replace('rng.randf_range(-22.0,35.0)', 'rng.randf_range(10.0,28.0)')
-visual = visual.replace('for z in [-20.0,-2.0,17.0,34.0]:', 'for z in [17.0,34.0]:')
-visual = visual.replace('for z in [-23.0,4.0,29.0]:', 'for z in [29.0]:')
-visual = visual.replace('rng.randf_range(-30.0,36.0)', 'rng.randf_range(10.0,34.0)')
+visual = visual.replace('Vector3(0, 0.08, 4), Vector3(13.8, 0.10, 73)', 'Vector3(0, 0.08, 22), Vector3(13.8, 0.10, 13)')
+visual = visual.replace('Vector3(side*8.15, 0.18, 4), Vector3(2.6,0.22,73)', 'Vector3(side*8.15, 0.18, 22), Vector3(2.6,0.22,13)')
+visual = visual.replace('Vector3(side*6.75, 0.30,4),Vector3(0.20,0.44,73)', 'Vector3(side*6.75, 0.30,22),Vector3(0.20,0.44,13)')
+visual = visual.replace('for z in range(-28, 38, 5):', 'for z in range(17, 30, 4):')
+visual = visual.replace('rng.randf_range(-22.0,35.0)', 'rng.randf_range(17.0,28.0)')
+visual = visual.replace('for z in [-20.0,-2.0,17.0,34.0]:', 'for z in [21.0,28.0]:')
+visual = visual.replace('for z in [-23.0,4.0,29.0]:', 'for z in [25.0]:')
+visual = visual.replace('rng.randf_range(-30.0,36.0)', 'rng.randf_range(18.0,29.0)')
 visual = visual.replace('plate.color = Color(0.008,0.014,0.012,0.58)', 'plate.color = Color(0.008,0.014,0.012,0.46)')
 
 
@@ -99,6 +99,8 @@ if '_ground_panel("res://docs/visual_reference/01_main_street.png"' not in visua
         1,
     )
 
+# Remove the experimental projected road; the perspective matte meets the real road at the set boundary.
+visual = visual.replace('\t_ground_panel("res://docs/visual_reference/01_main_street.png", Rect2(390,500,920,440), Vector3(0,0.205,20.0), Vector2(13.35,18.5))\n', '')
 dst.write_text(visual, encoding="utf-8")
 
 world = root / "scripts" / "world.gd"
