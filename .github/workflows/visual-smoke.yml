@@ -1,0 +1,78 @@
+name: Visual Smoke Test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - '.github/workflows/visual-smoke.yml'
+
+jobs:
+  visual-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Godot 4.3
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.3.0
+          use-dotnet: false
+          include-templates: false
+
+      - name: Prepare A1.6
+        shell: bash
+        run: |
+          set -euo pipefail
+          ZIP_FILE="$(find . -maxdepth 1 -type f -name 'After_Zero_A1_6_Source*.zip' -print -quit)"
+          test -n "$ZIP_FILE"
+          mkdir -p .ci_source
+          unzip -q "$ZIP_FILE" -d .ci_source
+          PROJECT_DIR="$(find .ci_source -name project.godot -printf '%h\n' | head -n 1)"
+          test -n "$PROJECT_DIR"
+          cp -a "$PROJECT_DIR"/. .
+          mkdir -p tests
+          cat > tests/render_probe.gd <<'GDSCRIPT'
+          extends SceneTree
+
+          func _initialize() -> void:
+              var packed := load("res://scenes/main.tscn")
+              if packed == null:
+                  push_error("RENDER_PROBE: main scene failed to load")
+                  quit(2)
+                  return
+              var scene = packed.instantiate()
+              root.add_child(scene)
+              call_deferred("_capture")
+
+          func _capture() -> void:
+              for i in range(12):
+                  await process_frame
+              var viewport := root
+              var image := viewport.get_texture().get_image()
+              if image == null or image.is_empty():
+                  push_error("RENDER_PROBE: viewport image empty")
+                  quit(3)
+                  return
+              var err := image.save_png("res://render_probe.png")
+              print("RENDER_PROBE saved=", err, " size=", image.get_width(), "x", image.get_height())
+              await process_frame
+              quit(0)
+          GDSCRIPT
+
+      - name: Render under Xvfb
+        shell: bash
+        run: |
+          set -o pipefail
+          xvfb-run -a godot --path . --rendering-method gl_compatibility --script tests/render_probe.gd 2>&1 | tee render_probe.log
+
+      - name: Upload probe
+        uses: actions/upload-artifact@v4
+        with:
+          name: AfterZero-visual-smoke
+          path: |
+            render_probe.png
+            render_probe.log
+          if-no-files-found: error
+          retention-days: 7
