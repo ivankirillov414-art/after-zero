@@ -41,7 +41,7 @@ func _tune_world(target_world: Node3D) -> void:
 			env.ambient_light_energy = 0.72
 			env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 			env.tonemap_exposure = 1.12
-			env.fog_enabled = true
+			env.fog_enabled = false
 			env.fog_light_color = Color(0.72, 0.74, 0.64)
 			env.fog_light_energy = 0.42
 			env.fog_density = 0.0022
@@ -128,8 +128,8 @@ func _build_panorama() -> void:
 	# Rear/side cards only become visible after the player turns away from the
 	# opening street vista.
 	_panorama("res://docs/visual_reference/02_intersection.png", Vector3(0, 32.0, 92.0), Vector2(250.0, 140.6), 180.0)
-	_panorama("res://docs/visual_reference/03_market.png", Vector3(96.0, 32.0, 8.0), Vector2(125.0, 70.3), -90.0)
-	_panorama("res://docs/visual_reference/04_workshop.png", Vector3(-96.0, 30.0, 8.0), Vector2(120.0, 67.5), 90.0)
+	_panorama("res://docs/visual_reference/03_market.png", Vector3(180.0, 32.0, 8.0), Vector2(110.0, 61.9), -90.0)
+	_panorama("res://docs/visual_reference/04_workshop.png", Vector3(-180.0, 30.0, 8.0), Vector2(110.0, 61.9), 90.0)
 
 func _road_material() -> ShaderMaterial:
 	var shader := Shader.new()
