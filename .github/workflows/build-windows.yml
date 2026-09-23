@@ -34,8 +34,9 @@ jobs:
           cp -a "$PROJECT_DIR"/. .
           test -f project.godot
           test -f export_presets.cfg
+          cat ci/a17_chunks/chunk_* > /tmp/apply_a17.py
+          python /tmp/apply_a17.py
           python ci/fix_generated_gd.py
-          python ci/apply_a17.py
           test -f scenes/menu.tscn
           grep -q '0.1.7' project.godot
           echo "Godot: $(godot --version)"
@@ -59,13 +60,13 @@ jobs:
           	call_deferred("_finish")
 
           func _finish() -> void:
-          	for i in range(12):
+          	for i in range(20):
           		await process_frame
           	print("RUNTIME_PROBE: gameplay instantiated")
           	quit(0)
           GDSCRIPT
           set -o pipefail
-          timeout 20s godot --headless --path . --script tests/runtime_probe.gd 2>&1 | tee runtime-smoke.log
+          timeout 25s godot --headless --path . --script tests/runtime_probe.gd 2>&1 | tee runtime-smoke.log
           if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Invalid access|Invalid assignment" runtime-smoke.log; then
             echo "Runtime validation failed"
             exit 1
