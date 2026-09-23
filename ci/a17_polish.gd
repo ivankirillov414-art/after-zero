@@ -9,8 +9,6 @@ func build(target_world: Node3D, player: Node3D, hud: CanvasLayer) -> void:
 	_hide_legacy_visuals(target_world)
 	_tune_world(target_world)
 	_build_panorama()
-	_build_foreground()
-	_build_workshop_front()
 	_cleanup_hud(hud)
 	if player:
 		player.position = Vector3(0.0, 0.35, 31.0)
