@@ -38,6 +38,7 @@ jobs:
           python /tmp/apply_a17.py
           python ci/apply_a171.py
           python ci/fix_generated_gd.py
+          python ci/apply_a17_polish.py
           grep -q '0.1.7' project.godot
           echo "Godot: $(godot --version)"
 
