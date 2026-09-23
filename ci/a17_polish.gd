@@ -28,9 +28,10 @@ func _has_script_ancestor(node: Node, stop: Node) -> bool:
 func _hide_legacy_visuals(target_world: Node3D) -> void:
 	for label in target_world.find_children("*", "Label3D", true, false):
 		label.visible = false
+	# Keep gameplay nodes/colliders/scripts alive, but hide every legacy graybox
+	# mesh. The visual layer below replaces them without breaking interactions.
 	for mesh in target_world.find_children("*", "MeshInstance3D", true, false):
-		if not _has_script_ancestor(mesh, target_world):
-			mesh.visible = false
+		mesh.visible = false
 
 func _tune_world(target_world: Node3D) -> void:
 	for node in target_world.get_children():
@@ -137,7 +138,7 @@ func _road_material() -> ShaderMaterial:
 	var shader := Shader.new()
 	shader.code = """
 shader_type spatial;
-render_mode diffuse_burley, specular_schlick_ggx;
+render_mode unshaded;
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
@@ -165,13 +166,11 @@ void fragment() {
 	float grit = fbm(p * 4.0);
 	float puddle = smoothstep(0.70, 0.84, fbm(p * 0.28 + vec2(3.0, 8.0)));
 	float crack = smoothstep(0.86, 0.94, abs(fbm(p * 1.8) - 0.50) * 2.0);
-	vec3 asphalt = vec3(0.105, 0.102, 0.090);
-	asphalt *= 0.72 + broad * 0.40 + grit * 0.12;
-	asphalt = mix(asphalt, vec3(0.035, 0.045, 0.043), puddle * 0.55);
-	asphalt = mix(asphalt, vec3(0.035, 0.033, 0.029), crack * 0.24);
+	vec3 asphalt = vec3(0.060, 0.064, 0.060);
+	asphalt *= 0.60 + broad * 0.72 + grit * 0.24;
+	asphalt = mix(asphalt, vec3(0.022, 0.030, 0.030), puddle * 0.72);
+	asphalt = mix(asphalt, vec3(0.012, 0.013, 0.012), crack * 0.48);
 	ALBEDO = asphalt;
-	ROUGHNESS = mix(0.96, 0.30, puddle * 0.75);
-	METALLIC = 0.0;
 }
 """
 	var mat := ShaderMaterial.new()
@@ -193,11 +192,11 @@ func _road_surface() -> void:
 func _build_foreground() -> void:
 	_road_surface()
 	for side in [-1.0, 1.0]:
-		_box(Vector3(side*8.15, 0.18, 4), Vector3(2.6,0.22,66), Color(0.29,0.285,0.255),0.96)
-		_box(Vector3(side*6.75, 0.30,4),Vector3(0.20,0.44,66),Color(0.42,0.41,0.36),0.93)
+		_box(Vector3(side*8.15, 0.18, 4), Vector3(2.6,0.22,66), Color(0.22,0.225,0.215),0.96)
+		_box(Vector3(side*6.75, 0.30,4),Vector3(0.20,0.44,66),Color(0.29,0.295,0.275),0.93)
 	for z in range(-27, 38, 5):
-		_box(Vector3(-0.20,0.145,float(z)),Vector3(0.10,0.02,2.6),Color(0.72,0.57,0.18),0.86)
-		_box(Vector3(0.20,0.145,float(z)),Vector3(0.10,0.02,2.6),Color(0.72,0.57,0.18),0.86)
+		_box(Vector3(-0.20,0.145,float(z)),Vector3(0.075,0.012,2.25),Color(0.44,0.36,0.10),0.86)
+		_box(Vector3(0.20,0.145,float(z)),Vector3(0.075,0.012,2.25),Color(0.44,0.36,0.10),0.86)
 
 func _build_facade(pos: Vector3, size: Vector3, color: Color, right_side: bool) -> void:
 	_box(pos,size,color,0.96)
@@ -316,11 +315,11 @@ func _tree(pos: Vector3, scale_factor: float) -> void:
 
 func _shrub(pos: Vector3, scale_factor: float) -> void:
 	for i in range(3):
-		_ellipsoid(pos+Vector3(rng.randf_range(-0.45,0.45),rng.randf_range(0.24,0.48),rng.randf_range(-0.45,0.45))*scale_factor,Vector3(rng.randf_range(0.45,0.80),rng.randf_range(0.30,0.55),rng.randf_range(0.45,0.80))*scale_factor,Color(0.10+rng.randf()*0.04,0.25+rng.randf()*0.10,0.06+rng.randf()*0.04))
+		_ellipsoid(pos+Vector3(rng.randf_range(-0.45,0.45),rng.randf_range(0.24,0.48),rng.randf_range(-0.45,0.45))*scale_factor,Vector3(rng.randf_range(0.45,0.80),rng.randf_range(0.30,0.55),rng.randf_range(0.45,0.80))*scale_factor,Color(0.055+rng.randf()*0.025,0.15+rng.randf()*0.055,0.035+rng.randf()*0.025))
 
 func _grass(pos: Vector3) -> void:
 	for i in range(3):
-		_box(pos+Vector3(rng.randf_range(-0.12,0.12),0.12,rng.randf_range(-0.12,0.12)),Vector3(0.022,rng.randf_range(0.18,0.42),0.022),Color(0.14,0.29+rng.randf()*0.08,0.07),1.0)
+		_box(pos+Vector3(rng.randf_range(-0.12,0.12),0.12,rng.randf_range(-0.12,0.12)),Vector3(0.022,rng.randf_range(0.18,0.42),0.022),Color(0.07,0.18+rng.randf()*0.045,0.035),1.0)
 
 func _cleanup_hud(hud: CanvasLayer) -> void:
 	if hud == null:
@@ -337,15 +336,14 @@ func _cleanup_hud(hud: CanvasLayer) -> void:
 			label.size = Vector2(430,52)
 			label.add_theme_font_size_override("font_size",12)
 		elif t.begins_with("ЭКОСИСТЕМА"):
-			label.position = Vector2(24,124)
-			label.add_theme_font_size_override("font_size",10)
+			label.visible = false
 		elif t.begins_with("ШУМ"):
 			label.position = Vector2(24,680)
 			label.add_theme_font_size_override("font_size",10)
 	var plate := ColorRect.new()
 	plate.position = Vector2(14,12)
-	plate.size = Vector2(455,142)
-	plate.color = Color(0.008,0.014,0.012,0.46)
+	plate.size = Vector2(455,102)
+	plate.color = Color(0.008,0.014,0.012,0.40)
 	plate.z_index = -8
 	hud.add_child(plate)
 	var tag := Label.new()
