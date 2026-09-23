@@ -4,9 +4,6 @@ on:
   workflow_dispatch:
   push:
     branches: [ main ]
-    paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
 
 jobs:
   export-windows:
@@ -17,6 +14,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Prepare source package
+        shell: bash
+        run: |
+          set -e
+          if [ -f After_Zero_A1_6_Source.zip ]; then
+            rm -rf .ci_source
+            mkdir .ci_source
+            unzip -q After_Zero_A1_6_Source.zip -d .ci_source
+            PROJECT_DIR="$(find .ci_source -name project.godot -printf '%h\n' | head -n 1)"
+            test -n "$PROJECT_DIR"
+            cp -a "$PROJECT_DIR"/. .
+          fi
+          test -f project.godot
+          test -f export_presets.cfg
 
       - name: Import project
         run: godot --headless --editor --quit --path .
@@ -32,7 +44,11 @@ jobs:
       - name: Package
         run: |
           cd build
-          zip -9 AfterZero-Windows-x64.zip AfterZero.exe AfterZero.pck 2>/dev/null || zip -9 AfterZero-Windows-x64.zip AfterZero.exe
+          if [ -f AfterZero.pck ]; then
+            zip -9 AfterZero-Windows-x64.zip AfterZero.exe AfterZero.pck
+          else
+            zip -9 AfterZero-Windows-x64.zip AfterZero.exe
+          fi
 
       - name: Upload Windows build
         uses: actions/upload-artifact@v4
