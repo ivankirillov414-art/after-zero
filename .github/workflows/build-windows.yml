@@ -8,47 +8,61 @@ on:
 jobs:
   export-windows:
     runs-on: ubuntu-latest
-    container:
-      image: barichello/godot-ci:4.3
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Godot 4.3
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.3.0
+          use-dotnet: false
+          include-templates: true
+
       - name: Prepare source package
         shell: bash
         run: |
-          set -e
-          if [ -f After_Zero_A1_6_Source.zip ]; then
+          set -euo pipefail
+          ZIP_FILE="$(find . -maxdepth 1 -type f -name 'After_Zero_A1_6_Source*.zip' -print -quit)"
+          if [ -n "$ZIP_FILE" ]; then
             rm -rf .ci_source
             mkdir .ci_source
-            unzip -q After_Zero_A1_6_Source.zip -d .ci_source
+            unzip -q "$ZIP_FILE" -d .ci_source
             PROJECT_DIR="$(find .ci_source -name project.godot -printf '%h\n' | head -n 1)"
             test -n "$PROJECT_DIR"
             cp -a "$PROJECT_DIR"/. .
           fi
           test -f project.godot
           test -f export_presets.cfg
+          echo "Godot: $(godot --version)"
+          echo "Project: $(pwd)/project.godot"
 
-      - name: Import project
-        run: godot --headless --editor --quit --path .
+      - name: Import project and validate scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --editor --quit --path .
 
       - name: Export Windows x64
+        shell: bash
         run: |
+          set -euo pipefail
           mkdir -p build
           godot --headless --path . --export-release "Windows Desktop" build/AfterZero.exe
+          test -f build/AfterZero.exe
 
-      - name: Verify executable
-        run: test -f build/AfterZero.exe
-
-      - name: Package
+      - name: Package Windows build
+        shell: bash
         run: |
+          set -euo pipefail
           cd build
           if [ -f AfterZero.pck ]; then
             zip -9 AfterZero-Windows-x64.zip AfterZero.exe AfterZero.pck
           else
             zip -9 AfterZero-Windows-x64.zip AfterZero.exe
           fi
+          ls -lh AfterZero-Windows-x64.zip
 
       - name: Upload Windows build
         uses: actions/upload-artifact@v4
