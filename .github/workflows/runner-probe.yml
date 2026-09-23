@@ -1,0 +1,15 @@
+name: Runner Probe
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Runner is alive
+        run: |
+          echo "runner-ok"
+          uname -a
