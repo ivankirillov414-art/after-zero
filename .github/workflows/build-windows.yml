@@ -20,7 +20,7 @@ jobs:
           use-dotnet: false
           include-templates: true
 
-      - name: Prepare source package
+      - name: Prepare A1.7 source
         shell: bash
         run: |
           set -euo pipefail
@@ -35,15 +35,39 @@ jobs:
           test -f project.godot
           test -f export_presets.cfg
           python ci/fix_generated_gd.py
+          python ci/apply_a17.py
+          test -f scenes/menu.tscn
+          grep -q '0.1.7' project.godot
           echo "Godot: $(godot --version)"
 
-      - name: Runtime smoke test
+      - name: Runtime smoke test gameplay
         shell: bash
         run: |
+          set -euo pipefail
+          mkdir -p tests
+          cat > tests/runtime_probe.gd <<'GDSCRIPT'
+          extends SceneTree
+
+          func _initialize() -> void:
+          	var packed := load("res://scenes/main.tscn")
+          	if packed == null:
+          		push_error("RUNTIME_PROBE: gameplay scene failed to load")
+          		quit(2)
+          		return
+          	var scene = packed.instantiate()
+          	root.add_child(scene)
+          	call_deferred("_finish")
+
+          func _finish() -> void:
+          	for i in range(12):
+          		await process_frame
+          	print("RUNTIME_PROBE: gameplay instantiated")
+          	quit(0)
+          GDSCRIPT
           set -o pipefail
-          timeout 15s godot --headless --path . --quit-after 5 2>&1 | tee runtime-smoke.log
-          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" runtime-smoke.log; then
-            echo "Runtime script validation failed"
+          timeout 20s godot --headless --path . --script tests/runtime_probe.gd 2>&1 | tee runtime-smoke.log
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Invalid access|Invalid assignment" runtime-smoke.log; then
+            echo "Runtime validation failed"
             exit 1
           fi
 
@@ -61,16 +85,16 @@ jobs:
           set -euo pipefail
           cd build
           if [ -f AfterZero.pck ]; then
-            zip -9 AfterZero-Windows-x64.zip AfterZero.exe AfterZero.pck
+            zip -9 AfterZero-A1.7-Windows-x64.zip AfterZero.exe AfterZero.pck
           else
-            zip -9 AfterZero-Windows-x64.zip AfterZero.exe
+            zip -9 AfterZero-A1.7-Windows-x64.zip AfterZero.exe
           fi
 
       - name: Upload Windows build
         uses: actions/upload-artifact@v4
         with:
-          name: AfterZero-Windows-x64
-          path: build/AfterZero-Windows-x64.zip
+          name: AfterZero-A1.7-Windows-x64
+          path: build/AfterZero-A1.7-Windows-x64.zip
           if-no-files-found: error
           retention-days: 30
 
@@ -78,7 +102,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: AfterZero-runtime-log
+          name: AfterZero-A1.7-runtime-log
           path: runtime-smoke.log
           if-no-files-found: ignore
           retention-days: 7
