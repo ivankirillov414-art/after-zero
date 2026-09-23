@@ -38,9 +38,15 @@ jobs:
           python /tmp/apply_a17.py
           python ci/apply_a171.py
           python ci/fix_generated_gd.py
-          test -f scripts/visual_a17.gd
           grep -q '0.1.7' project.godot
           echo "Godot: $(godot --version)"
+
+      - name: Import game resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --editor --quit --path .
+          test -d .godot/imported
 
       - name: Runtime smoke test gameplay
         shell: bash
@@ -68,7 +74,7 @@ jobs:
           GDSCRIPT
           set -o pipefail
           timeout 25s godot --headless --path . --script tests/runtime_probe.gd 2>&1 | tee runtime-smoke.log
-          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Invalid access|Invalid assignment" runtime-smoke.log; then
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Invalid access|Invalid assignment|No loader found for resource" runtime-smoke.log; then
             echo "Runtime validation failed"
             exit 1
           fi
