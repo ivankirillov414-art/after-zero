@@ -65,6 +65,40 @@ visual = visual.replace('rng.randf_range(-30.0,36.0)', 'rng.randf_range(10.0,34.
 visual = visual.replace('plate.color = Color(0.008,0.014,0.012,0.58)', 'plate.color = Color(0.008,0.014,0.012,0.46)')
 
 
+
+ground_code = r'''
+func _ground_panel(texture_path: String, region: Rect2, pos: Vector3, size: Vector2) -> void:
+	var source := load(texture_path) as Texture2D
+	if source == null:
+		return
+	var atlas := AtlasTexture.new()
+	atlas.atlas = source
+	atlas.region = region
+	var quad := QuadMesh.new()
+	quad.size = size
+	var mat := StandardMaterial3D.new()
+	mat.albedo_texture = atlas
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	mat.roughness = 1.0
+	quad.material = mat
+	var panel := MeshInstance3D.new()
+	panel.mesh = quad
+	panel.position = pos
+	panel.rotation_degrees = Vector3(-90, 0, 0)
+	panel.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(panel)
+
+'''
+if "func _ground_panel(" not in visual:
+    visual = visual.replace("func _build_foreground() -> void:", ground_code + "func _build_foreground() -> void:", 1)
+if '_ground_panel("res://docs/visual_reference/01_main_street.png"' not in visual:
+    visual = visual.replace(
+        "\nfunc _build_facade(pos: Vector3, size: Vector3, color: Color, right_side: bool) -> void:",
+        '\n\t_ground_panel("res://docs/visual_reference/01_main_street.png", Rect2(390,500,920,440), Vector3(0,0.205,20.0), Vector2(13.35,18.5))\n\nfunc _build_facade(pos: Vector3, size: Vector3, color: Color, right_side: bool) -> void:',
+        1,
+    )
+
 dst.write_text(visual, encoding="utf-8")
 
 world = root / "scripts" / "world.gd"
