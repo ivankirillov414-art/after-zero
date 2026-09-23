@@ -9,6 +9,8 @@ on:
       - 'ci/fix_generated_gd.py'
       - 'ci/a17_chunks/**'
       - 'ci/apply_a171.py'
+      - 'ci/a17_polish.gd'
+      - 'ci/apply_a17_polish.py'
 
 jobs:
   visual-smoke:
@@ -40,6 +42,7 @@ jobs:
           python /tmp/apply_a17.py
           python ci/apply_a171.py
           python ci/fix_generated_gd.py
+          python ci/apply_a17_polish.py
           godot --headless --editor --quit --path .
           test -d .godot/imported
           mkdir -p tests
