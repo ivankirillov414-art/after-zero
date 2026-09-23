@@ -1,0 +1,43 @@
+name: Build Windows x64
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - '**/*.md'
+      - 'docs/**'
+
+jobs:
+  export-windows:
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Import project
+        run: godot --headless --editor --quit --path .
+
+      - name: Export Windows x64
+        run: |
+          mkdir -p build
+          godot --headless --path . --export-release "Windows Desktop" build/AfterZero.exe
+
+      - name: Verify executable
+        run: test -f build/AfterZero.exe
+
+      - name: Package
+        run: |
+          cd build
+          zip -9 AfterZero-Windows-x64.zip AfterZero.exe AfterZero.pck 2>/dev/null || zip -9 AfterZero-Windows-x64.zip AfterZero.exe
+
+      - name: Upload Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: AfterZero-Windows-x64
+          path: build/AfterZero-Windows-x64.zip
+          if-no-files-found: error
+          retention-days: 30
