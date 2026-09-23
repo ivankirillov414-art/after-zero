@@ -8,6 +8,7 @@ on:
       - '.github/workflows/visual-smoke.yml'
       - 'ci/fix_generated_gd.py'
       - 'ci/a17_chunks/**'
+      - 'ci/apply_a171.py'
 
 jobs:
   visual-smoke:
@@ -37,6 +38,7 @@ jobs:
           cp -a "$PROJECT_DIR"/. .
           cat ci/a17_chunks/chunk_* > /tmp/apply_a17.py
           python /tmp/apply_a17.py
+          python ci/apply_a171.py
           python ci/fix_generated_gd.py
           mkdir -p tests
           cat > tests/render_probe.gd <<'GDSCRIPT'
