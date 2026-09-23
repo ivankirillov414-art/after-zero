@@ -25,7 +25,7 @@ visual = visual.replace("Vector3(0, 31.0, 72.0), Vector2(112.0, 63.0)", "Vector3
 visual = visual.replace("Vector3(68.0, 28.0, 8.0), Vector2(96.0, 54.0)", "Vector3(61.0, 44.0, 8.0), Vector2(160.0, 90.0)")
 visual = visual.replace("Vector3(-68.0, 26.0, 8.0), Vector2(92.0, 51.75)", "Vector3(-61.0, 42.0, 8.0), Vector2(154.0, 86.6)")
 visual = visual.replace("Vector3(13.8, 0.10, 73), Color(0.065,0.068,0.064)", "Vector3(13.8, 0.10, 73), Color(0.080,0.082,0.074)")
-visual = visual.replace("Color(0.31,0.30,0.27)", "Color(0.265,0.258,0.235)")
+visual = visual.replace("Color(0.31,0.30,0.27)", "Color(0.24,0.235,0.215)")\nvisual = visual.replace("Color(0.080,0.082,0.074)", "Color(0.22,0.215,0.19)")\nvisual = visual.replace("Color(0.72,0.57,0.18)", "Color(0.52,0.43,0.14)")
 visual = visual.replace(
 '''\t_build_facade(Vector3(-14.5,4.0,7.0),Vector3(10.0,8.0,24.0),Color(0.30,0.14,0.085),false)
 \t_build_facade(Vector3(14.5,3.2,13.0),Vector3(10.0,6.4,18.0),Color(0.25,0.23,0.19),true)
@@ -42,6 +42,16 @@ visual = visual.replace("Color(0.14,0.29+rng.randf()*0.08,0.07)", "Color(0.07,0.
 visual = visual.replace("label.position = Vector2(24,108)", "label.position = Vector2(24,665)")
 visual = visual.replace("label.position = Vector2(24,680)", "label.position = Vector2(24,692)")
 visual = visual.replace("plate.size = Vector2(455,122)", "plate.size = Vector2(455,98)")
+# No grass blades in the drivable lane.
+visual = visual.replace('if abs(x) < 5.7 and rng.randf() > 0.10:\n\t\t\tcontinue', 'if abs(x) < 6.8:\n\t\t\tcontinue')
+# The native status/objective panels already provide the backdrop; remove the extra overlay plate.
+visual = visual.replace('''\tvar plate := ColorRect.new()
+\tplate.position = Vector2(14,12)
+\tplate.size = Vector2(455,98)
+\tplate.color = Color(0.008,0.014,0.012,0.46)
+\tplate.z_index = -8
+\thud.add_child(plate)
+''', '')
 
 visual = visual.replace(
 '''\t_build_facade(Vector3(-12.2,2.7,13.0),Vector3(4.4,5.4,14.0),Color(0.26,0.12,0.070),false)
@@ -135,6 +145,15 @@ if "polish_a17.build(self, player, hud)" not in text:
 # Put the ecology state out of the objective card so the HUD no longer collides.
 text = text.replace("ecosystem_label.position = Vector2(20, 164)", "ecosystem_label.position = Vector2(20, 655)")
 text = text.replace("ecosystem_label.position = Vector2(20, 122)", "ecosystem_label.position = Vector2(20, 655)")
+
+# Compact the native HUD panels and reduce visual obstruction.
+text = text.replace("status_panel.size = Vector2(420, 48)", "status_panel.size = Vector2(360, 44)")
+text = text.replace('stats_label.add_theme_font_size_override("font_size", 14)', 'stats_label.add_theme_font_size_override("font_size", 13)')
+text = text.replace("objective_panel.size = Vector2(470, 84)", "objective_panel.size = Vector2(420, 72)")
+text = text.replace("objective_label.size = Vector2(442, 66)", "objective_label.size = Vector2(392, 54)")
+text = text.replace('objective_label.add_theme_font_size_override("font_size", 14)', 'objective_label.add_theme_font_size_override("font_size", 12)')
+text = text.replace("Color(0.015, 0.025, 0.022, 0.72)", "Color(0.015, 0.025, 0.022, 0.52)")
+text = text.replace("Color(0.018, 0.030, 0.024, 0.68)", "Color(0.018, 0.030, 0.024, 0.50)")
 
 world.write_text(text, encoding="utf-8")
 print("A1.7 cinematic polish applied")
