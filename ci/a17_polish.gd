@@ -124,7 +124,7 @@ func _panorama(path: String, pos: Vector3, size: Vector2, rot_y: float) -> void:
 func _build_panorama() -> void:
 	# The approved Riverdale render fills the whole forward frustum. Keeping its
 	# edges outside the camera view avoids the "picture floating in the sky" look.
-	_panorama("res://docs/visual_reference/01_main_street.png", Vector3(0, 35.0, -78.0), Vector2(310.0, 174.4), 0.0)
+	_panorama("res://docs/visual_reference/01_main_street.png", Vector3(0, 18.0, -78.0), Vector2(430.0, 241.9), 0.0)
 	# Rear/side cards only become visible after the player turns away from the
 	# opening street vista.
 	_panorama("res://docs/visual_reference/02_intersection.png", Vector3(0, 32.0, 92.0), Vector2(250.0, 140.6), 180.0)
@@ -323,7 +323,7 @@ func _cleanup_hud(hud: CanvasLayer) -> void:
 		return
 	for label in hud.find_children("*","Label",true,false):
 		var t := str(label.text)
-		if t.begins_with("ПОСЛЕ НУЛЯ") or t.contains("WASD"):
+		if t.begins_with("ПОСЛЕ НУЛЯ") or t.contains("WASD") or t.contains("interact") or t.contains("inventory"):
 			label.visible = false
 		elif t.begins_with("HP"):
 			label.position = Vector2(24,20)
@@ -335,8 +335,7 @@ func _cleanup_hud(hud: CanvasLayer) -> void:
 		elif t.begins_with("ЭКОСИСТЕМА"):
 			label.visible = false
 		elif t.begins_with("ШУМ"):
-			label.position = Vector2(24,680)
-			label.add_theme_font_size_override("font_size",10)
+			label.visible = false
 	var plate := ColorRect.new()
 	plate.position = Vector2(14,12)
 	plate.size = Vector2(455,102)
