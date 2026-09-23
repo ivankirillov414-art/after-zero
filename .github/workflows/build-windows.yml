@@ -20,7 +20,7 @@ jobs:
           use-dotnet: false
           include-templates: true
 
-      - name: Prepare A1.7 source
+      - name: Prepare A1.8 source
         shell: bash
         run: |
           set -euo pipefail
@@ -39,6 +39,8 @@ jobs:
           python ci/apply_a171.py
           python ci/fix_generated_gd.py
           python ci/apply_a17_polish.py
+          python ci/apply_a18.py
+          python ci/fix_generated_gd.py
           grep -q '0.1.8' project.godot
           echo "Godot: $(godot --version)"
 
