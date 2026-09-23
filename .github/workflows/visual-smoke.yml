@@ -7,6 +7,7 @@ on:
     paths:
       - '.github/workflows/visual-smoke.yml'
       - 'ci/fix_generated_gd.py'
+      - 'ci/apply_a17.py'
 
 jobs:
   visual-smoke:
@@ -22,7 +23,7 @@ jobs:
           use-dotnet: false
           include-templates: false
 
-      - name: Prepare A1.6
+      - name: Prepare A1.7
         shell: bash
         run: |
           set -euo pipefail
@@ -35,6 +36,7 @@ jobs:
           test -n "$PROJECT_DIR"
           cp -a "$PROJECT_DIR"/. .
           python ci/fix_generated_gd.py
+          python ci/apply_a17.py
           mkdir -p tests
           cat > tests/render_probe.gd <<'GDSCRIPT'
           extends SceneTree
@@ -50,7 +52,7 @@ jobs:
           	call_deferred("_capture")
 
           func _capture() -> void:
-          	for i in range(20):
+          	for i in range(28):
           		await process_frame
           	var image := root.get_texture().get_image()
           	if image == null or image.is_empty():
@@ -63,13 +65,13 @@ jobs:
           	quit(0)
           GDSCRIPT
 
-      - name: Render under Xvfb
+      - name: Render gameplay under Xvfb
         shell: bash
         run: |
           set -o pipefail
           xvfb-run -a godot --path . --rendering-method gl_compatibility --script tests/render_probe.gd 2>&1 | tee render_probe.log
-          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" render_probe.log; then
-            echo "Render probe found script errors"
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Invalid access|Invalid assignment" render_probe.log; then
+            echo "Render probe found runtime errors"
             exit 1
           fi
 
@@ -77,7 +79,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: AfterZero-visual-smoke
+          name: AfterZero-A1.7-visual-smoke
           path: |
             render_probe.png
             render_probe.log
