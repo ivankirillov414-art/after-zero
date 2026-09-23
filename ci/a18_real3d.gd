@@ -27,7 +27,7 @@ func build(target_world: Node3D, player: Node3D, hud: CanvasLayer) -> void:
 	_build_grass_multimesh()
 	_cleanup_hud(hud)
 	if player:
-		player.position = Vector3(-22.0, 0.35, 6.1)
+		player.position = Vector3(0.0, 0.35, 34.0)
 		player.rotation_degrees.y = 0.0
 		for camera in player.find_children("*", "Camera3D", true, false):
 			camera.fov = 72.0
@@ -61,19 +61,28 @@ func _tune_environment(target_world: Node3D) -> void:
 	for child in target_world.get_children():
 		if child is WorldEnvironment and child.environment:
 			var env: Environment = child.environment
-			env.background_mode = Environment.BG_COLOR
-			env.background_color = Color(0.39, 0.52, 0.58)
-			env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+			var sky := Sky.new()
+			var sky_mat := ProceduralSkyMaterial.new()
+			sky_mat.sky_top_color = Color(0.09,0.20,0.34)
+			sky_mat.sky_horizon_color = Color(0.70,0.78,0.76)
+			sky_mat.ground_bottom_color = Color(0.08,0.10,0.07)
+			sky_mat.ground_horizon_color = Color(0.34,0.42,0.32)
+			sky_mat.sun_angle_max = 16.0
+			sky_mat.sun_curve = 0.10
+			sky.sky_material = sky_mat
+			env.background_mode = Environment.BG_SKY
+			env.sky = sky
+			env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
 			env.ambient_light_color = Color(0.68, 0.72, 0.62)
-			env.ambient_light_energy = 0.64
+			env.ambient_light_energy = 0.56
 			env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 			env.tonemap_exposure = 1.08
 			env.fog_enabled = true
 			env.fog_light_color = Color(0.54, 0.64, 0.62)
 			env.fog_light_energy = 0.34
-			env.fog_density = 0.0011
+			env.fog_density = 0.0018
 			env.fog_height = -1.0
-			env.fog_height_density = 0.020
+			env.fog_height_density = 0.028
 		elif child is DirectionalLight3D:
 			child.rotation_degrees = Vector3(-42.0, -34.0, 0.0)
 			child.light_color = Color(1.0, 0.88, 0.70)
@@ -98,7 +107,7 @@ render_mode diffuse_burley, specular_schlick_ggx;
 uniform vec3 base_color = vec3(0.34, 0.15, 0.09);
 float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 void fragment(){
-	vec2 uv = UV * vec2(8.0, 13.0);
+	vec2 uv = UV * vec2(18.0, 28.0);
 	float row = floor(uv.y);
 	uv.x += mod(row,2.0)*0.5;
 	vec2 cell = fract(uv);
