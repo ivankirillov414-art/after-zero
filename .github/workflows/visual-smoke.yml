@@ -10,6 +10,8 @@ on:
       - 'ci/a17_chunks/**'
       - 'ci/apply_a171.py'
       - 'ci/a17_polish.gd'
+      - 'ci/apply_a18.py'
+      - 'ci/a18_real3d.gd'
       - 'ci/apply_a17_polish.py'
 
 jobs:
@@ -87,7 +89,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: AfterZero-A1.7-visual-smoke
+          name: AfterZero-A1.8-visual-smoke
           path: |
             render_probe.png
             render_probe.log
