@@ -1,0 +1,8 @@
+9doLQZiL5ClmIfdLcIGwNRW5gtCICAtXxAxOWNpXQGSrAvh0lB4KnY1PThqiKhUHIBPKHjN2q85iqEv1L3UmbFlZxlqB328K9ksf68Uk5Oc+PHd1XJkijNKXf9jJzPdvLW/dwf1pqymJq6SstnB+QcV5jmcoI5FKXZFQ4WqcrvUGVdsbHbDxkG4Y5KoGRz4h4dhc4+FNl4/NxrFQVyCXjxrtAzccnIzB45xOClSVeHEiQ4qmDrlXnAdKeNShextOnPONpFupH60tuX18RPvuhKS254nP2bXjeoBfS95efc9rT6htbAfS6iqpZpT3A3qO92PZUSueaXgOdSa7i7sUBiw3ZTsYWsqbmKpPWM07ygVwLyyLnd7JqmK2YyixGwlfmM/iHWiaXk5lNnZnU73H5xEVXZ9Ve4oMYEgT65KNWXz+xg0jzD6N2GzHp0erZbrkJHNjoZC/NQEUPZNfNxMwoPAHB1E+8FqEhzpKp+4v4glI4SrZ9P5NuW8E3lntcrrRG7Ni6geJVXvD9mbCfA=',
+}
+
+for rel, payload in FILES.items():
+    path=Path(rel)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(zlib.decompress(base64.b64decode(payload)))
+    print("A1.7 overlay:", rel)
