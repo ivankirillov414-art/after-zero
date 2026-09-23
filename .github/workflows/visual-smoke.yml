@@ -6,6 +6,7 @@ on:
     branches: [ main ]
     paths:
       - '.github/workflows/visual-smoke.yml'
+      - 'ci/fix_generated_gd.py'
 
 jobs:
   visual-smoke:
@@ -27,38 +28,39 @@ jobs:
           set -euo pipefail
           ZIP_FILE="$(find . -maxdepth 1 -type f -name 'After_Zero_A1_6_Source*.zip' -print -quit)"
           test -n "$ZIP_FILE"
-          mkdir -p .ci_source
+          rm -rf .ci_source
+          mkdir .ci_source
           unzip -q "$ZIP_FILE" -d .ci_source
           PROJECT_DIR="$(find .ci_source -name project.godot -printf '%h\n' | head -n 1)"
           test -n "$PROJECT_DIR"
           cp -a "$PROJECT_DIR"/. .
+          python ci/fix_generated_gd.py
           mkdir -p tests
           cat > tests/render_probe.gd <<'GDSCRIPT'
           extends SceneTree
 
           func _initialize() -> void:
-              var packed := load("res://scenes/main.tscn")
-              if packed == null:
-                  push_error("RENDER_PROBE: main scene failed to load")
-                  quit(2)
-                  return
-              var scene = packed.instantiate()
-              root.add_child(scene)
-              call_deferred("_capture")
+          	var packed := load("res://scenes/main.tscn")
+          	if packed == null:
+          		push_error("RENDER_PROBE: main scene failed to load")
+          		quit(2)
+          		return
+          	var scene = packed.instantiate()
+          	root.add_child(scene)
+          	call_deferred("_capture")
 
           func _capture() -> void:
-              for i in range(12):
-                  await process_frame
-              var viewport := root
-              var image := viewport.get_texture().get_image()
-              if image == null or image.is_empty():
-                  push_error("RENDER_PROBE: viewport image empty")
-                  quit(3)
-                  return
-              var err := image.save_png("res://render_probe.png")
-              print("RENDER_PROBE saved=", err, " size=", image.get_width(), "x", image.get_height())
-              await process_frame
-              quit(0)
+          	for i in range(20):
+          		await process_frame
+          	var image := root.get_texture().get_image()
+          	if image == null or image.is_empty():
+          		push_error("RENDER_PROBE: viewport image empty")
+          		quit(3)
+          		return
+          	var err := image.save_png("res://render_probe.png")
+          	print("RENDER_PROBE saved=", err, " size=", image.get_width(), "x", image.get_height())
+          	await process_frame
+          	quit(0)
           GDSCRIPT
 
       - name: Render under Xvfb
@@ -66,8 +68,13 @@ jobs:
         run: |
           set -o pipefail
           xvfb-run -a godot --path . --rendering-method gl_compatibility --script tests/render_probe.gd 2>&1 | tee render_probe.log
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script" render_probe.log; then
+            echo "Render probe found script errors"
+            exit 1
+          fi
 
       - name: Upload probe
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: AfterZero-visual-smoke
