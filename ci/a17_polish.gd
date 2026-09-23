@@ -11,7 +11,6 @@ func build(target_world: Node3D, player: Node3D, hud: CanvasLayer) -> void:
 	_build_panorama()
 	_build_foreground()
 	_build_workshop_front()
-	_build_street_furniture()
 	_build_vegetation()
 	_cleanup_hud(hud)
 	if player:
@@ -134,24 +133,71 @@ func _build_panorama() -> void:
 	_panorama("res://docs/visual_reference/03_market.png", Vector3(96.0, 32.0, 8.0), Vector2(125.0, 70.3), -90.0)
 	_panorama("res://docs/visual_reference/04_workshop.png", Vector3(-96.0, 30.0, 8.0), Vector2(120.0, 67.5), 90.0)
 
+func _road_material() -> ShaderMaterial:
+	var shader := Shader.new()
+	shader.code = """
+shader_type spatial;
+render_mode diffuse_burley, specular_schlick_ggx;
+
+float hash(vec2 p) {
+	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+}
+float noise(vec2 p) {
+	vec2 i = floor(p);
+	vec2 f = fract(p);
+	f = f * f * (3.0 - 2.0 * f);
+	return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+	           mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+float fbm(vec2 p) {
+	float v = 0.0;
+	float a = 0.5;
+	for (int i = 0; i < 5; i++) {
+		v += a * noise(p);
+		p = p * 2.03 + vec2(17.7, 9.2);
+		a *= 0.5;
+	}
+	return v;
+}
+void fragment() {
+	vec2 p = UV * vec2(8.0, 34.0);
+	float broad = fbm(p * 0.55);
+	float grit = fbm(p * 4.0);
+	float puddle = smoothstep(0.70, 0.84, fbm(p * 0.28 + vec2(3.0, 8.0)));
+	float crack = smoothstep(0.86, 0.94, abs(fbm(p * 1.8) - 0.50) * 2.0);
+	vec3 asphalt = vec3(0.105, 0.102, 0.090);
+	asphalt *= 0.72 + broad * 0.40 + grit * 0.12;
+	asphalt = mix(asphalt, vec3(0.035, 0.045, 0.043), puddle * 0.55);
+	asphalt = mix(asphalt, vec3(0.035, 0.033, 0.029), crack * 0.24);
+	ALBEDO = asphalt;
+	ROUGHNESS = mix(0.96, 0.30, puddle * 0.75);
+	METALLIC = 0.0;
+}
+"""
+	var mat := ShaderMaterial.new()
+	mat.shader = shader
+	return mat
+
+func _road_surface() -> void:
+	var plane := PlaneMesh.new()
+	plane.size = Vector2(13.8, 66.0)
+	plane.subdivide_width = 1
+	plane.subdivide_depth = 1
+	var road := MeshInstance3D.new()
+	road.mesh = plane
+	road.position = Vector3(0, 0.145, 4)
+	road.material_override = _road_material()
+	road.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	add_child(road)
+
 func _build_foreground() -> void:
-	_box(Vector3(0, 0.08, -10), Vector3(13.8, 0.10, 112), Color(0.080,0.082,0.075), 0.98)
+	_road_surface()
 	for side in [-1.0, 1.0]:
-		_box(Vector3(side*8.15, 0.18, -10), Vector3(2.6,0.22,112), Color(0.28,0.28,0.25),0.96)
-		_box(Vector3(side*6.75, 0.30,-10),Vector3(0.20,0.44,112),Color(0.42,0.41,0.36),0.93)
-	for z in range(-52, 38, 5):
+		_box(Vector3(side*8.15, 0.18, 4), Vector3(2.6,0.22,66), Color(0.29,0.285,0.255),0.96)
+		_box(Vector3(side*6.75, 0.30,4),Vector3(0.20,0.44,66),Color(0.42,0.41,0.36),0.93)
+	for z in range(-27, 38, 5):
 		_box(Vector3(-0.20,0.145,float(z)),Vector3(0.10,0.02,2.6),Color(0.72,0.57,0.18),0.86)
 		_box(Vector3(0.20,0.145,float(z)),Vector3(0.10,0.02,2.6),Color(0.72,0.57,0.18),0.86)
-	for i in range(18):
-		var x: float = rng.randf_range(-5.4,5.4)
-		var z: float = rng.randf_range(-22.0,35.0)
-		var sx: float = rng.randf_range(0.7,2.6)
-		var sz: float = rng.randf_range(0.4,1.6)
-		var c := Color(0.045,0.050,0.047) if i%3 else Color(0.08,0.12,0.12)
-		_box(Vector3(x,0.155,z),Vector3(sx,0.014,sz),c,0.20 if i%3==0 else 0.98,0.02,i%3==0)
-	_create_car(Vector3(-3.8,0.60,13.0),-4.0,Color(0.20,0.21,0.18),1.0)
-	_create_car(Vector3(3.6,0.60,-4.0),5.0,Color(0.28,0.17,0.12),0.92)
-	_create_car(Vector3(-3.1,0.60,-18.0),-2.0,Color(0.13,0.16,0.16),0.88)
 
 func _build_facade(pos: Vector3, size: Vector3, color: Color, right_side: bool) -> void:
 	_box(pos,size,color,0.96)
@@ -248,12 +294,12 @@ func _create_car(pos: Vector3, yaw_deg: float, color: Color, scale_factor: float
 func _build_vegetation() -> void:
 	# Keep close vegetation low and dark so the high-detail approved environment
 	# remains the dominant visual layer instead of being blocked by blob trees.
-	for i in range(46):
+	for i in range(22):
 		var side: float = -1.0 if i%2==0 else 1.0
 		var x: float = side*rng.randf_range(7.2,9.3)
 		var z: float = rng.randf_range(-42.0,36.0)
-		_shrub(Vector3(x,0.18,z),rng.randf_range(0.28,0.62))
-	for i in range(92):
+		_shrub(Vector3(x,0.18,z),rng.randf_range(0.18,0.42))
+	for i in range(58):
 		var x: float = rng.randf_range(-9.8,9.8)
 		var z: float = rng.randf_range(-30.0,36.0)
 		if abs(x) < 5.7 and rng.randf() > 0.10:
