@@ -37,7 +37,7 @@ jobs:
           cat ci/a17_chunks/chunk_* > /tmp/apply_a17.py
           python /tmp/apply_a17.py
           python ci/fix_generated_gd.py
-          test -f scenes/menu.tscn
+          test -f scripts/visual_a17.gd
           grep -q '0.1.7' project.godot
           echo "Godot: $(godot --version)"
 
