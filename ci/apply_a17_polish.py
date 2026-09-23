@@ -9,6 +9,41 @@ if not src.exists():
 dst.parent.mkdir(parents=True, exist_ok=True)
 shutil.copyfile(src, dst)
 
+# Second visual tuning pass: make the approved concept art fill the full distant
+# field of view, reduce primitive foreground mass, darken vegetation and clean HUD.
+visual = dst.read_text(encoding="utf-8")
+visual = visual.replace("player.position = Vector3(0.0, 0.35, 31.0)", "player.position = Vector3(0.0, 0.35, 28.0)")
+visual = visual.replace('''	if player:
+		player.position = Vector3(0.0, 0.35, 28.0)
+		player.rotation_degrees.y = 0.0''','''	if player:
+		player.position = Vector3(0.0, 0.35, 28.0)
+		player.rotation_degrees.y = 0.0
+		for cam in player.find_children("*", "Camera3D", true, false):
+			cam.fov = 68.0''')
+visual = visual.replace("Vector3(0, 35.0, -62.0), Vector2(132.0, 74.25)", "Vector3(0, 50.0, -58.0), Vector2(205.0, 115.3)")
+visual = visual.replace("Vector3(0, 31.0, 72.0), Vector2(112.0, 63.0)", "Vector3(0, 47.0, 67.0), Vector2(188.0, 105.8)")
+visual = visual.replace("Vector3(68.0, 28.0, 8.0), Vector2(96.0, 54.0)", "Vector3(61.0, 44.0, 8.0), Vector2(160.0, 90.0)")
+visual = visual.replace("Vector3(-68.0, 26.0, 8.0), Vector2(92.0, 51.75)", "Vector3(-61.0, 42.0, 8.0), Vector2(154.0, 86.6)")
+visual = visual.replace("Vector3(13.8, 0.10, 73), Color(0.065,0.068,0.064)", "Vector3(13.8, 0.10, 73), Color(0.080,0.082,0.074)")
+visual = visual.replace("Color(0.31,0.30,0.27)", "Color(0.265,0.258,0.235)")
+visual = visual.replace(
+'''\t_build_facade(Vector3(-14.5,4.0,7.0),Vector3(10.0,8.0,24.0),Color(0.30,0.14,0.085),false)
+\t_build_facade(Vector3(14.5,3.2,13.0),Vector3(10.0,6.4,18.0),Color(0.25,0.23,0.19),true)
+\t_build_facade(Vector3(-14.5,3.0,-16.0),Vector3(10.0,6.0,12.0),Color(0.35,0.20,0.12),false)
+\t_build_facade(Vector3(14.5,4.5,-14.0),Vector3(10.0,9.0,14.0),Color(0.24,0.18,0.14),true)''',
+'''\t_build_facade(Vector3(-12.2,2.7,13.0),Vector3(4.4,5.4,14.0),Color(0.26,0.12,0.070),false)
+\t_build_facade(Vector3(12.2,2.5,10.0),Vector3(4.4,5.0,12.0),Color(0.23,0.21,0.17),true)
+\t_build_facade(Vector3(-12.5,3.0,-13.0),Vector3(5.0,6.0,11.0),Color(0.28,0.15,0.085),false)
+\t_build_facade(Vector3(12.5,3.4,-12.0),Vector3(5.0,6.8,12.0),Color(0.21,0.16,0.12),true)''')
+visual = visual.replace("Color(0.10,0.25+rng.randf()*0.08,0.07)", "Color(0.07,0.18+rng.randf()*0.07,0.045)")
+visual = visual.replace("rng.randf_range(0.08,0.15),rng.randf_range(0.25,0.39),rng.randf_range(0.055,0.11)", "rng.randf_range(0.055,0.11),rng.randf_range(0.17,0.30),rng.randf_range(0.035,0.08)")
+visual = visual.replace("Color(0.10+rng.randf()*0.04,0.25+rng.randf()*0.10,0.06+rng.randf()*0.04)", "Color(0.065+rng.randf()*0.03,0.17+rng.randf()*0.08,0.04+rng.randf()*0.025)")
+visual = visual.replace("Color(0.14,0.29+rng.randf()*0.08,0.07)", "Color(0.07,0.18+rng.randf()*0.07,0.04)")
+visual = visual.replace("label.position = Vector2(24,108)", "label.position = Vector2(24,665)")
+visual = visual.replace("label.position = Vector2(24,680)", "label.position = Vector2(24,692)")
+visual = visual.replace("plate.size = Vector2(455,122)", "plate.size = Vector2(455,98)")
+dst.write_text(visual, encoding="utf-8")
+
 world = root / "scripts" / "world.gd"
 text = world.read_text(encoding="utf-8")
 
