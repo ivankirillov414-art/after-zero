@@ -40,6 +40,8 @@ jobs:
           python /tmp/apply_a17.py
           python ci/apply_a171.py
           python ci/fix_generated_gd.py
+          godot --headless --editor --quit --path .
+          test -d .godot/imported
           mkdir -p tests
           cat > tests/render_probe.gd <<'GDSCRIPT'
           extends SceneTree
@@ -73,7 +75,7 @@ jobs:
         run: |
           set -o pipefail
           xvfb-run -a godot --path . --rendering-method gl_compatibility --script tests/render_probe.gd 2>&1 | tee render_probe.log
-          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Invalid access|Invalid assignment" render_probe.log; then
+          if grep -E "SCRIPT ERROR|Parse Error|Failed to load script|Invalid access|Invalid assignment|No loader found for resource" render_probe.log; then
             echo "Render probe found runtime errors"
             exit 1
           fi
