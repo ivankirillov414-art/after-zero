@@ -7,7 +7,7 @@ on:
     paths:
       - '.github/workflows/visual-smoke.yml'
       - 'ci/fix_generated_gd.py'
-      - 'ci/apply_a17.py'
+      - 'ci/a17_chunks/**'
 
 jobs:
   visual-smoke:
@@ -35,8 +35,9 @@ jobs:
           PROJECT_DIR="$(find .ci_source -name project.godot -printf '%h\n' | head -n 1)"
           test -n "$PROJECT_DIR"
           cp -a "$PROJECT_DIR"/. .
+          cat ci/a17_chunks/chunk_* > /tmp/apply_a17.py
+          python /tmp/apply_a17.py
           python ci/fix_generated_gd.py
-          python ci/apply_a17.py
           mkdir -p tests
           cat > tests/render_probe.gd <<'GDSCRIPT'
           extends SceneTree
@@ -52,7 +53,7 @@ jobs:
           	call_deferred("_capture")
 
           func _capture() -> void:
-          	for i in range(28):
+          	for i in range(40):
           		await process_frame
           	var image := root.get_texture().get_image()
           	if image == null or image.is_empty():
