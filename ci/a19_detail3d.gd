@@ -21,6 +21,7 @@ func build(target_world: Node3D, player: Node3D, hud: CanvasLayer) -> void:
 	_build_vehicle_set()
 	_build_street_trees()
 	_build_ground_growth()
+	_build_distant_ridge()
 	_build_story_prop_visuals()
 	_cleanup_hud(hud)
 	if player:
@@ -309,6 +310,19 @@ func _build_workshop_detail() -> void:
 	# Floor clutter kept out of the walking line.
 	for p in [Vector3(3.5,0.28,-1.8),Vector3(2.75,0.23,-2.25),Vector3(-3.7,0.22,-2.0)]:
 		_box(root,p,Vector3(0.62,0.45,0.52),mats["wood"])
+	# Daylight bounce from the open bay keeps the unpowered workshop readable.
+	var daylight := OmniLight3D.new()
+	daylight.position = Vector3(0,3.0,-2.6)
+	daylight.light_color = Color(0.72,0.82,0.86)
+	daylight.light_energy = 1.25
+	daylight.omni_range = 8.0
+	root.add_child(daylight)
+	var bounce := OmniLight3D.new()
+	bounce.position = Vector3(-1.5,2.2,2.6)
+	bounce.light_color = Color(0.52,0.60,0.54)
+	bounce.light_energy = 0.58
+	bounce.omni_range = 5.0
+	root.add_child(bounce)
 	# Exterior sign and subtle ivy on one corner only.
 	_box(root,Vector3(0,4.05,-3.99),Vector3(5.9,0.68,0.16),mats["paint_green"])
 	_label(root,"RIVERDALE REPAIR",Vector3(0,4.08,-4.10),Vector3.ZERO,36)
@@ -388,15 +402,22 @@ func _build_market_detail() -> void:
 	_box(root,Vector3(front_x-0.02,1.30,-5.0),Vector3(0.08,2.55,1.45),mats["glass_dark"])
 	for z in [-5.7,-4.3]:
 		_cyl(root,Vector3(front_x-0.75,0.55,z),0.09,1.1,mats["rust"])
+	# Interior shelving silhouettes visible through the dark shopfront.
+	for x in [-6.9,-5.6]:
+		for z in [-3.5,-1.2,1.2,3.5]:
+			_box(root,Vector3(x,1.15,z),Vector3(0.16,2.1,1.25),mats["metal"])
+			for y in [0.45,1.05,1.65]:
+				_box(root,Vector3(x-0.15,y,z),Vector3(0.80,0.08,1.15),mats["metal"])
 	# Rooftop growth.
 	for i in range(11):
 		_leaf_cross(root,Vector3(rng.randf_range(-7.5,7.5),5.22,rng.randf_range(-4.8,4.8)),Vector2(rng.randf_range(0.7,1.3),rng.randf_range(0.55,1.0)),mats["leaf_mid"],rng.randf_range(0,180))
 	_ivy_strip(root,Vector3(front_x,0.35,5.45),Vector3(front_x,4.55,5.45),8)
 
 func _build_vehicle_set() -> void:
-	_car(Vector3(-3.6,0.38,-13.0),-7.0,Color(0.13,0.15,0.14),1.0)
-	_car(Vector3(3.6,0.38,17.0),5.0,Color(0.24,0.105,0.055),0.96)
-	_pickup(Vector3(-3.1,0.38,28.5),-3.0,Color(0.18,0.20,0.17),0.98)
+	# Park vehicles near the curb so the first-person street composition stays open.
+	_car(Vector3(-5.0,0.38,-13.0),-5.0,Color(0.13,0.15,0.14),1.0)
+	_car(Vector3(5.1,0.38,16.0),4.0,Color(0.24,0.105,0.055),0.96)
+	_pickup(Vector3(-5.0,0.38,13.0),-2.0,Color(0.18,0.20,0.17),0.98)
 
 func _car(pos: Vector3, yaw: float, color: Color, scale_value: float) -> void:
 	var r := _root("CarA19",pos); r.rotation_degrees.y=yaw
@@ -451,13 +472,13 @@ func _tree(pos: Vector3, scale_value: float, variant: int) -> void:
 		var y: float=h*(0.48+0.062*float(i))
 		var branch := _cyl(r,Vector3(0,y,0),0.055*scale_value,2.5*scale_value,mats["wood_dark"],Vector3(58,angle,0),8)
 		branch.position += Vector3(sin(deg_to_rad(angle))*0.48,0,cos(deg_to_rad(angle))*0.48)
-	# Leaf cards instead of lime-green spheres.
-	for i in range(26):
-		var angle: float=TAU*float(i)/26.0+rng.randf_range(-0.30,0.30)
-		var radius: float=rng.randf_range(0.45,2.05)*scale_value
-		var y: float=rng.randf_range(h*0.58,h*1.02)
+	# Many smaller leaf cards read as foliage rather than oversized blobs.
+	for i in range(42):
+		var angle: float=TAU*float(i)/42.0+rng.randf_range(-0.32,0.32)
+		var radius: float=rng.randf_range(0.50,2.15)*scale_value
+		var y: float=rng.randf_range(h*0.56,h*1.03)
 		var mat: Material=mats["leaf_dark"] if (i+variant)%3==0 else (mats["leaf_mid"] if i%3 else mats["leaf_light"])
-		_leaf_cross(r,Vector3(cos(angle)*radius,y,sin(angle)*radius),Vector2(rng.randf_range(0.75,1.35),rng.randf_range(0.55,1.05))*scale_value,mat,rng.randf_range(0,180))
+		_leaf_cross(r,Vector3(cos(angle)*radius,y,sin(angle)*radius),Vector2(rng.randf_range(0.42,0.82),rng.randf_range(0.34,0.70))*scale_value,mat,rng.randf_range(0,180))
 
 func _build_ground_growth() -> void:
 	# Bushes at sidewalk edges.
@@ -480,6 +501,28 @@ func _build_ground_growth() -> void:
 		mm.set_instance_transform(i,Transform3D(basis,Vector3(x,0.26,z)))
 	var inst := MultiMeshInstance3D.new(); inst.multimesh=mm; add_child(inst)
 
+func _build_distant_ridge() -> void:
+	# Two real 3D ridge layers remove the flat horizon without returning to 2.5D cards.
+	var back_mat := _std(Color(0.055,0.095,0.070),1.0)
+	var near_mat := _std(Color(0.075,0.125,0.080),1.0)
+	for layer in range(2):
+		var z: float=-47.0-float(layer)*8.0
+		var mat: Material=near_mat if layer==0 else back_mat
+		for i in range(9):
+			var x: float=-44.0+float(i)*11.0
+			var radius: float=8.5+rng.randf_range(-1.5,1.5)
+			var height: float=12.0+rng.randf_range(-2.0,5.0)
+			var cone := CylinderMesh.new()
+			cone.top_radius=0.0
+			cone.bottom_radius=radius
+			cone.height=height
+			cone.radial_segments=7
+			var mi := MeshInstance3D.new()
+			mi.mesh=cone
+			mi.position=Vector3(x,height*0.5,z)
+			mi.material_override=mat
+			add_child(mi)
+
 func _build_story_prop_visuals() -> void:
 	# Story note / generator / terminal proxies in the old world remain invisible,
 	# but collisions and interact scripts still work. These visuals align exactly.
@@ -497,7 +540,7 @@ func _cleanup_hud(hud: CanvasLayer) -> void:
 	tag.position=Vector2(1060,18)
 	tag.size=Vector2(195,18)
 	tag.horizontal_alignment=HORIZONTAL_ALIGNMENT_RIGHT
-	tag.text="AFTER ZERO  ·  A1.9 DETAIL 3D"
+	tag.text="AFTER ZERO  ·  A1.9.1 DETAIL 3D"
 	tag.add_theme_font_size_override("font_size",10)
 	tag.modulate=Color(0.80,0.82,0.76,0.58)
 	hud.add_child(tag)
