@@ -20,7 +20,7 @@ jobs:
           use-dotnet: false
           include-templates: true
 
-      - name: Prepare A1.8 source
+      - name: Prepare A1.9 source
         shell: bash
         run: |
           set -euo pipefail
@@ -41,7 +41,9 @@ jobs:
           python ci/apply_a17_polish.py
           python ci/apply_a18.py
           python ci/fix_generated_gd.py
-          grep -q '0.1.8' project.godot
+          python ci/apply_a19.py
+          python ci/fix_generated_gd.py
+          grep -q '0.1.9' project.godot
           echo "Godot: $(godot --version)"
 
       - name: Import game resources
@@ -67,12 +69,17 @@ jobs:
           		return
           	var scene = packed.instantiate()
           	root.add_child(scene)
-          	call_deferred("_finish")
+          	call_deferred("_finish", scene)
 
-          func _finish() -> void:
-          	for i in range(20):
+          func _finish(scene: Node) -> void:
+          	for i in range(28):
           		await process_frame
-          	print("RUNTIME_PROBE: gameplay instantiated")
+          	var player = scene.get("player")
+          	if player == null:
+          		push_error("RUNTIME_PROBE: player missing")
+          		quit(3)
+          		return
+          	print("RUNTIME_PROBE: A1.9 gameplay instantiated at ", player.position)
           	quit(0)
           GDSCRIPT
           set -o pipefail
@@ -96,16 +103,16 @@ jobs:
           set -euo pipefail
           cd build
           if [ -f AfterZero.pck ]; then
-            zip -9 AfterZero-A1.8-Windows-x64.zip AfterZero.exe AfterZero.pck
+            zip -9 AfterZero-A1.9-Windows-x64.zip AfterZero.exe AfterZero.pck
           else
-            zip -9 AfterZero-A1.8-Windows-x64.zip AfterZero.exe
+            zip -9 AfterZero-A1.9-Windows-x64.zip AfterZero.exe
           fi
 
       - name: Upload Windows build
         uses: actions/upload-artifact@v4
         with:
-          name: AfterZero-A1.8-Windows-x64
-          path: build/AfterZero-A1.8-Windows-x64.zip
+          name: AfterZero-A1.9-Windows-x64
+          path: build/AfterZero-A1.9-Windows-x64.zip
           if-no-files-found: error
           retention-days: 30
 
@@ -113,7 +120,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: AfterZero-A1.8-runtime-log
+          name: AfterZero-A1.9-runtime-log
           path: runtime-smoke.log
           if-no-files-found: ignore
           retention-days: 7
